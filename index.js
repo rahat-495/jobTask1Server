@@ -79,7 +79,7 @@ async function run() {
 
     app.post('/addToCart' , async (req , res) => {
       const data = req.body ;
-      const isAxistingItem = await cartsCollection.findOne({email : data?.email}) ;
+      const isAxistingItem = await cartsCollection.findOne({id : data?.id}) ;
       if(isAxistingItem?.id){
         if(isAxistingItem?.id === data?.id){
           const update = await cartsCollection.updateOne({_id : isAxistingItem?._id} , { $set : { numberOfAdd : isAxistingItem?.numberOfAdd + 1 } })
@@ -89,6 +89,10 @@ async function run() {
           const addToCart = await cartsCollection.insertOne(data) ;
           res.send(addToCart) ;
         }
+      }
+      else if(isAxistingItem?.id !== data?.id){
+        const addToCart = await cartsCollection.insertOne(data) ;
+        res.send(addToCart) ;
       }
     })
 
@@ -108,6 +112,24 @@ async function run() {
       const {email} = req.body ;
       const updateIsLogin = await usersCollection.updateOne({email} , { $set : { isLogin : false } }) ;
       res.send(updateIsLogin) ;
+    })
+
+    app.patch('/addItem' , async (req , res) => {
+      const data = req.body ;
+      const result = await cartsCollection.updateOne({_id : new ObjectId(data?._id)} , { $set : { numberOfAdd : data?.numberOfAdd + 1 } }) ;
+      res.send(result) ;
+    })
+
+    app.patch('/removeItem' , async (req , res) => {
+      const data = req.body ;
+      const result = await cartsCollection.updateOne({_id : new ObjectId(data?._id)} , { $set : { numberOfAdd : data?.numberOfAdd - 1 } }) ;
+      res.send(result) ;
+    })
+
+    app.delete('/deleteItem' , async (req , res) => {
+      const {id} = req.query ;
+      const result = await cartsCollection.deleteOne({_id : new ObjectId(id)}) ;
+      res.send(result) ;
     })
 
     // Send a ping to confirm a successful connection
