@@ -54,8 +54,15 @@ async function run() {
 
     app.get('/cartItemCount' , async (req , res) => {
       const {email} = req.query ;
-      const count = await cartsCollection.find({email}).toArray() ;
-      res.send({count : count.length}) ;
+      const data = await cartsCollection.find({email}).toArray() ;
+      const count = data?.reduce((acc , data) => acc+ data?.numberOfAdd , 0)
+      res.send({count}) ;
+    })
+
+    app.get('/cartItems' , async (req , res) => {
+      const {email} = req.query ;
+      const cartItems = await cartsCollection.find({email}).toArray() ;
+      res.send(cartItems) ;
     })
 
     app.post('/signUp' , async (req , res) => {
@@ -72,8 +79,17 @@ async function run() {
 
     app.post('/addToCart' , async (req , res) => {
       const data = req.body ;
-      const addToCart = await cartsCollection.insertOne(data) ;
-      res.send(addToCart) ;
+      const isAxistingItem = await cartsCollection.findOne({email : data?.email}) ;
+      if(isAxistingItem?.id){
+        if(isAxistingItem?.id === data?.id){
+          const update = await cartsCollection.updateOne({_id : isAxistingItem?._id} , { $set : { numberOfAdd : isAxistingItem?.numberOfAdd + 1 } })
+          res.send(update) ;
+        }
+        else{
+          const addToCart = await cartsCollection.insertOne(data) ;
+          res.send(addToCart) ;
+        }
+      }
     })
 
     app.put('/userFromGoogle' , async (req , res) => {
